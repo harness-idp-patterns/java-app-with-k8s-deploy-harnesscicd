@@ -12,25 +12,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class AppTest {
+class AppTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    public void contextLoads() {
+    void contextLoads() {
         // Verifies that the Spring context loads successfully
     }
 
     @Test
-    public void testHelloEndpoint() throws Exception {
-        mockMvc.perform(get("/"))
+    void testApiEndpoint() throws Exception {
+        mockMvc.perform(get("/api"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Hello from {{ cookiecutter.project_name }}!"));
     }
 
     @Test
-    public void testHealthEndpoint() throws Exception {
+    void testHealthEndpoint() throws Exception {
         mockMvc.perform(get("/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));

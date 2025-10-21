@@ -1,12 +1,9 @@
-FROM maven:3.8-openjdk-11 AS build
+# Dockerfile
+FROM eclipse-temurin:11-jre
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn package -DskipTests
-
-FROM openjdk:11-jre-slim
-WORKDIR /app
-COPY --from=build /app/target/{{ cookiecutter.artifact_id }}-{{ cookiecutter.version }}.jar app.jar
+# copy the fat jar produced by mvn package
+COPY target/*-SNAPSHOT.jar /app/app.jar
+# if you use a fixed version tag in cookiecutter, you can COPY target/{{cookiecutter.artifact_id}}-{{cookiecutter.version}}.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENV JAVA_OPTS=""
+ENTRYPOINT ["java","-jar","/app/app.jar"]

@@ -1,112 +1,170 @@
-# {{ cookiecutter.project_name }}
+# { cookiecutter.project_name }
 
-{{ cookiecutter.description }}
+{ cookiecutter.description }
 
-## Overview
+---
 
-This is a Spring Boot application created using the Harness Internal Developer Platform (IDP). It provides a simple REST API with health check endpoints and is containerized for deployment to Kubernetes.
+## ⚡️ What you get
 
-## Development
+- Spring Boot 2.7.x (Java 11) web app
+- Clean landing page at `/` (static `index.html`)
+- JSON API at `/api` and health at `/health`
+- Swagger UI at `/swagger-ui.html`
+- Build & commit metadata at `/actuator/info`
+- Kubernetes manifests (Deployment + Service) ready for EKS
+- Docker image that runs on Linux/amd64
 
-### Prerequisites
+---
 
-- Java 11 or higher  
-- Maven 3.6 or higher  
-- Docker (for local container testing)  
-- Kubernetes CLI (`kubectl`) for deployment verification  
+## 🧰 Prereqs
 
-### Building the Application
+- JDK 11
+- Maven 3.8+
+- Docker (with `buildx`)
+- kubectl connected to a cluster (EKS or compatible)
 
-To build the application locally:
+---
+
+## 🚀 Build & Run Locally
 
 ```bash
-mvn clean package
+# build jar
+mvn clean package -DskipTests
+
+# run app
+java -jar target/{ cookiecutter.artifact_id }-{ cookiecutter.version }.jar
+
+# open in browser
+open http://localhost:8080/
 ```
 
-To run the tests:
+Endpoints:
+- `GET /` → landing page
+- `GET /api` → sample JSON
+- `GET /health` → health JSON
+- `GET /swagger-ui.html` → API docs
+- `GET /actuator/info` → build & commit metadata
+
+---
+
+## 🐳 Build & Push Docker Image
+
+The runtime image expects the fat jar to be present (built with the command above). The Dockerfile copies the jar and runs `java -jar`.
+
+```bash
+# build & push for EKS (linux/amd64)
+docker buildx build   --platform linux/amd64   -t { cookiecutter.docker_registry }/{ cookiecutter.docker_image_name }:latest   --push .
+```
+
+> Tip: If you’re using a private registry, make sure your cluster has the right imagePullSecret.
+
+---
+
+## ☸️ Deploy to Kubernetes (EKS)
+
+```bash
+# namespace (templated)
+kubectl get ns { cookiecutter.k8s_namespace } >/dev/null 2>&1 || kubectl create ns { cookiecutter.k8s_namespace }
+
+# apply manifests
+kubectl apply -f kubernetes/service.yml
+kubectl apply -f kubernetes/deployment.yml
+
+# watch rollout
+kubectl rollout status deploy/{ cookiecutter.artifact_id } -n { cookiecutter.k8s_namespace }
+
+# get external endpoint
+kubectl get svc { cookiecutter.artifact_id }-svc -n { cookiecutter.k8s_namespace }
+```
+
+When the `EXTERNAL-IP` is ready, open:
+```
+http://<EXTERNAL-IP>/
+```
+
+If you’re in a cluster without external LoadBalancers, port-forward instead:
+```bash
+kubectl port-forward svc/{ cookiecutter.artifact_id }-svc 8080:80 -n { cookiecutter.k8s_namespace }
+# then visit http://localhost:8080/
+```
+
+---
+
+## 🔁 Fast Dev Loop
+
+This repo ships with `:latest` and `imagePullPolicy: Always`, so you don’t need to edit YAML on each build. After pushing a new image, just restart the deployment:
+
+```bash
+docker buildx build --platform linux/amd64 -t { cookiecutter.docker_registry }/{ cookiecutter.docker_image_name }:latest --push .
+
+kubectl rollout restart deploy/{ cookiecutter.artifact_id } -n { cookiecutter.k8s_namespace }
+kubectl rollout status deploy/{ cookiecutter.artifact_id } -n { cookiecutter.k8s_namespace }
+```
+
+---
+
+## ⚙️ Configuration
+
+`src/main/resources/application.properties`:
+```properties
+server.port=8080
+management.endpoints.web.exposure.include=health,info
+management.info.git.mode=full
+info.app.name={ cookiecutter.package_name }
+info.app.description={ cookiecutter.description }
+```
+
+Env vars used by the container (set in the Deployment):
+- `JAVA_OPTS` → JVM container tuning (defaults to `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`)
+- `POD_NAME`, `POD_NAMESPACE` → auto-injected via Downward API (used in the sample response)
+
+---
+
+## 🧪 Tests
 
 ```bash
 mvn test
 ```
 
-To run the application locally:
-
-```bash
-mvn spring-boot:run
-```
-
-The application will be available at [http://localhost:8080](http://localhost:8080)
+`AppTest` includes:
+- Spring context load smoke test
+- `/api` JSON contract
+- `/health` contract
 
 ---
 
-## API Endpoints
+## 📦 Project Layout
 
-| Method | Endpoint | Description |
-|---------|-----------|-------------|
-| GET | `/` | Returns a greeting message and timestamp |
-| GET | `/health` | Health check endpoint (returns status "UP" when service is healthy) |
-
----
-
-## Docker
-
-### Building the Docker Image
-
-```bash
-docker build -t {{ cookiecutter.docker_registry }}/{{ cookiecutter.docker_image_name }}:latest .
 ```
-
-### Running the Docker Container
-
-```bash
-docker run -p 8080:8080 {{ cookiecutter.docker_registry }}/{{ cookiecutter.docker_image_name }}:latest
+{ cookiecutter.project_slug }/
+├─ src/
+│  ├─ main/
+│  │  ├─ java/{ cookiecutter.package_path }/
+│  │  │  ├─ App.java
+│  │  │  └─ HelloController.java
+│  │  └─ resources/
+│  │     └─ static/
+│  │        └─ index.html
+│  └─ test/
+│     └─ java/{ cookiecutter.package_path }/AppTest.java
+├─ kubernetes/
+│  ├─ deployment.yml
+│  └─ service.yml
+├─ Dockerfile
+└─ pom.xml
 ```
 
 ---
 
-## Deployment
+## 🧭 Troubleshooting
 
-This application is automatically deployed to Kubernetes using Harness CD.
-
-### Kubernetes Resources
-
-| Resource | Name |
-|-----------|------|
-| Deployment | {{ cookiecutter.project_slug }} |
-| Service | {{ cookiecutter.project_slug }} |
-
-Access URL: The application will be accessible via the LoadBalancer service.
-
-### Viewing Deployment Status
-
-```bash
-kubectl get deployments {{ cookiecutter.project_slug }}
-kubectl get pods -l app={{ cookiecutter.project_slug }}
-kubectl get service {{ cookiecutter.project_slug }}
-```
+- **Image pulls but pod crashes** → check `kubectl logs` and verify the jar path is `/app/app.jar` inside the image.
+- **`exec format error`** on startup → your image arch doesn’t match node arch. Build with `--platform linux/amd64` for EKS x86 nodes.
+- **`/` shows Whitelabel error** → ensure `src/main/resources/static/index.html` exists in the jar (`jar tf target/*.jar | grep BOOT-INF/classes/static/index.html`).
+- **Changes don’t show up** → you pushed `:latest` but Pods reused the cached image. Use `imagePullPolicy: Always` (already set) and `kubectl rollout restart`.
 
 ---
 
-## CI/CD Pipeline
+## 📝 License
 
-This application uses Harness CI/CD pipelines for automated building, testing, and deployment:
-
-1. **Build and Push Stage** – Compiles the code and runs unit tests; Builds and pushes the Docker image.  
-3. **Deploy Stage** – Deploys the application to Kubernetes  
-
----
-
-## Customization
-
-To customize this application for your needs:
-
-- Update the application code in `src/main/java/{{ cookiecutter.package_path }}/`  
-- Modify the API endpoints in `HelloController.java`  
-- Add additional dependencies to `pom.xml` as needed  
-- Update Kubernetes resource requirements in `kubernetes/deployment.yaml`  
-
----
-
-## Support
-
-For questions or issues, please contact the **Platform Engineering Team**.
+© { cookiecutter.author_name }. For demo/PoV purposes.

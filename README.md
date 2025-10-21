@@ -1,12 +1,32 @@
-# Cookiecutter Spring Boot Template
+# 🍪 Cookiecutter Spring Boot Template
 
-This is a Cookiecutter template for bootstrapping a Spring Boot microservice with:
+A reusable [Cookiecutter](https://cookiecutter.readthedocs.io) template for bootstrapping a **Spring Boot microservice** with modern CI/CD and deployment support.
 
-- Java 17 + Maven
-- Dockerfile for containerization
-- Kubernetes manifests for deployment to EKS
+---
 
-## Usage
+## 🚀 Features
+
+- **Java 17 + Spring Boot 2.7.x**
+- **Maven** build system  
+- **Dockerfile** for containerized builds (`buildx`-ready for EKS)  
+- **Kubernetes manifests** (`Deployment` + `Service`) for EKS  
+- Sample endpoints: `/api`, `/health`, `/swagger-ui.html`, `/actuator/info`  
+- Built-in Harness IDP compatibility
+
+---
+
+## 🧰 Prerequisites
+
+Make sure you have:
+
+- [Python 3.8+](https://www.python.org/downloads/)
+- [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/installation.html)
+- [Docker](https://docs.docker.com/get-docker/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) connected to your EKS cluster
+
+---
+
+## 🏗️ Generate Your Project
 
 Install Cookiecutter:
 
@@ -14,17 +34,39 @@ Install Cookiecutter:
 pip install cookiecutter
 ```
 
-Generate your new project:
+Then generate your new app from this template:
 
 ```bash
 cookiecutter gh:harness-idp-sandbox/java-app-with-k8s-deploy-harnesscicd
 ```
 
-You’ll be prompted to enter values like:
+You’ll be prompted for variables like:
 
-- project_name
-- project_slug
-- package_name
-- group_id
+- `project_name`
+- `project_slug`
+- `package_name`
+- `group_id`
+- `docker_registry`
+- `k8s_namespace`
 
-Then cd into your generated project and follow the README instructions to build, push, and deploy.
+---
+
+## 🧭 Next Steps
+
+1. `cd <your-project-name>`  
+2. Review the generated `README.md` for build and deploy steps  
+3. Run locally or push to EKS using the pre-built manifests
+
+Example:
+
+```bash
+mvn clean package -DskipTests
+docker buildx build --platform linux/amd64 -t <your-registry>/<your-app>:latest --push .
+kubectl apply -f kubernetes/
+```
+
+---
+
+## 📝 License
+
+© Harness SE Team — for internal and proof-of-value (PoV) use.
