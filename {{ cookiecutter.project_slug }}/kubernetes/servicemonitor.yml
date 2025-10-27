@@ -17,18 +17,3 @@ spec:
     - port: http                           # matches the Service port name
       path: /actuator/prometheus
       interval: 15s
----
-# service exposing /actuator/prometheus specifically (optional, but tidy)
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ cookiecutter.project_slug }}-metrics
-  labels:
-    app: {{ cookiecutter.project_slug }}
-spec:
-  selector:
-    app: {{ cookiecutter.project_slug }}
-  ports:
-  - name: metrics
-    port: 8081
-    targetPort: 8080

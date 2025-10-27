@@ -40,7 +40,7 @@
         <div class="kicker">Status</div>
         <div>Health: <code id="health">checking…</code></div>
         <div>Pod: <code id="pod">unknown</code></div>
-        <a class="btn" href="/health">Open /health</a>
+        <a class="btn" href="/actuator/health">Open /actuator/health</a>
       </section>
 
       <section class="tile">
@@ -62,6 +62,13 @@
         <div>Built: <code id="time">n/a</code></div>
         <a class="btn" href="/actuator/info">Open /actuator/info</a>
       </section>
+
+      <section class="tile">
+        <div class="kicker">Metrics</div>
+        <div>Prometheus scrape endpoint</div>
+        <a class="btn" href="/actuator/prometheus">Open /actuator/prometheus</a>
+      </section>
+
     </div>
 
     <footer>Deployed via Harness IDP in minutes ✨</footer>
@@ -69,7 +76,7 @@
 
   <script>
     // basic client-side fetch to show live data; safe for a PoV
-    fetch('/health').then(r => r.json()).then(j => {
+    fetch('/actuator/health').then(r => r.json()).then(j => {
       document.getElementById('health').textContent = j.status || JSON.stringify(j);
     }).catch(()=>{});
     fetch('/api').then(r => r.json()).then(j => {
